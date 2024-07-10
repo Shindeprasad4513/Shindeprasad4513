@@ -1,0 +1,2117 @@
+slip 3
+---------------------------------------------------------------------------------------------------create table hospital24(h_no int primary key,h_name varchar(20),city varchar(20));
+create table doctor24(d_no int primary key,d_name varchar(20),specialization varchar(20),charges int,h_no int references hospital24);
+
+insert into hospital24 values(101,'adhav_hospital','shrirampur');
+insert into hospital24 values(102,'gore_hospital','pune');
+insert into hospital24 values(103,'harar_hospital','nashik');
+insert into hospital24 values(104,'harar_hospital','shrirampur');
+
+insert into doctor24 values(1,'pranav','orthopedics',1000,101);
+insert into doctor24 values(2,'om','pediatrics',70000,102);
+insert into doctor24 values(3,'mayur','radiology',90000,103);
+insert into doctor24 values(4,'prem','aesthesia',80000,101);
+insert into doctor24 values(5,'nikhil','pediatrics',50000,102);
+
+select *from hospital24;
+select*from doctor24;
+
+1]
+create or replace function spider() returns trigger
+as
+$$
+declare
+begin
+if(new.charges<0)then
+raise exception'CHARGES CANNOT BE NEGATIVE!';
+end if;
+return new;
+end;
+$$
+language plpgsql;
+
+create trigger trispi
+before insert or update on doctor24
+for each row
+execute procedure spider();
+
+insert into doctor24 values(7,'nikhil','pediatrics',-9,102);
+
+2]
+
+create or replace function visit(name doctor24.d_name%type) returns void
+as
+$$
+declare
+r1 hospital24%rowtype;
+c1 cursor for select hospital24.* from hospital24,doctor24
+where hospital24.h_no=doctor24.h_no
+and doctor24.d_name=name;
+begin
+open c1;
+loop
+fetch c1 into r1;
+exit when not found;
+raise notice'h_no=%',r1.h_no;
+raise notice'h_name=%',r1.h_name;
+raise notice'city=%',r1.city;
+end loop;
+close c1;
+end;
+$$
+language plpgsql;
+
+select visit('pranav');
+
+3]
+
+create or replace function apple(cname hospital24.city%type) returns void
+as
+$$
+declare
+r1 hospital24.h_name%type;
+c1 cursor for select h_name from hospital24
+where city=cname;
+begin
+open c1;
+loop
+fetch c1 into r1;
+exit when not found;
+raise notice'hospital name=%',r1;
+end loop;
+close c1;
+end;
+$$
+language plpgsql;
+
+ select apple('shrirampur');
+---------------------------------------------------------------------------------------------------
+slip 4
+
+create table movie24(m_name varchar(20) primary key,release_year int,budget money);
+create table actor24(a_name varchar(20) primary key,role varchar(20),charges money,a_address varchar(30));
+create table ma24(m_name varchar(20)references movie24,a_name varchar(20)references actor24);
+
+
+insert into movie24 values('rrr',2022,'100000');
+insert into movie24 values('pk',2010,'800000');
+insert into movie24 values('naruto',2017,'700000');
+
+insert into actor24 values('pranav','hero','50000','shrirampur');
+insert into actor24 values('mayur','villan','150','vadala');
+insert into actor24 values('om','hero','50000','pune');
+
+insert into ma24 values('rrr','pranav');
+insert into ma24 values('pk','mayur');
+insert into ma24 values('naruto','om');
+insert into ma24 values('rrr','mayur');
+insert into ma24 values('naruto','pranav');
+
+select *from movie24;
+select*from actor24;
+select*from ma24;
+
+1]
+
+create or replace function class_fees_bhara_re(name movie24.m_name%type)returns void
+as
+$$
+declare
+rec record;
+begin
+for rec in select * from movie24
+where m_name=name
+loop
+raise notice'release_year=% budget=%',rec.release_year,rec.budget;
+end loop;
+end;
+$$
+language plpgsql;
+
+select class_fees_bhara_re('naruto');
+
+2]
+create or replace function rose(name actor24.a_name%type)returns void
+as
+$$
+declare
+r1 movie24.m_name%type;
+c1 cursor for select movie24.m_name from movie24,actor24,ma24
+where movie24.m_name=ma24.m_name
+and actor24.a_name=ma24.a_name
+and actor24.a_name=name;
+begin
+open c1;
+loop
+fetch c1 into r1;
+exit when not found;
+raise notice'MOVIES NAME=%',r1;
+end loop;
+close c1;
+end;
+$$
+language plpgsql;
+
+select rose('pranav');
+
+
+3]
+
+create or replace function king()returns trigger
+as
+$$
+declare
+begin
+raise notice'actor record is succesfully deleted';
+return old;
+end;
+$$
+language plpgsql;
+
+
+create trigger t9
+after delete on actor24
+for each row
+execute procedure king();
+
+insert into actor24 values('spider','villan','150','vadala');     //dont connect with references 
+
+delete from actor24
+where a_name='spider';
+---------------------------------------------------------------------------------------------------
+slip 5
+
+create table customer24(cno int primary key,cname varchar(20),city varchar(20));
+create table account24(a_no int primary key,a_type varchar(20),opening_date date,balance money,cno int references customer24);
+
+
+insert into customer24 values(1,'pranav','shrirampur');
+insert into customer24 values(2,'om','nashik');
+insert into customer24 values(3,'mayur','pune');
+
+insert into account24 values(101,'saving','2022/10/05','15000',1);
+insert into account24 values(102,'current','2023/07/07','75000',2);
+insert into account24 values(103,'saving','2024/06/25','55000',3);
+insert into account24 values(104,'current','2022/08/20','95000',1);
+insert into account24 values(105,'saving','2021/04/15','45000',2);
+
+select *from customer24;
+select *from account24;
+1]
+
+create or replace function queen(num account24.a_no%type)returns void
+as
+$$
+declare
+r1 account24%rowtype;
+begin
+select * into r1 from account24 where a_no=num;
+raise notice'a_no=%',r1.a_no;
+raise notice'a_type=%',r1.a_type;
+raise notice'opening_date=%',r1.opening_date;
+raise notice'balance=%',r1.balance;
+raise notice'cno=%',r1.cno;
+end;
+$$
+language plpgsql;
+
+select queen('101');
+2]
+
+create or replace function exam(name customer24.cname%type)returns void
+as
+$$
+declare
+c int=0;
+r1 account24%rowtype;
+c1 cursor for select account24.* from account24,customer24
+where account24.cno=customer24.cno
+and customer24.cname=name;
+begin
+open c1;
+loop
+fetch c1 into r1;
+exit when not found;
+raise notice'a_no=%',r1.a_no;
+raise notice'a_type=%',r1.a_type;
+raise notice'opening_date=%',r1.opening_date;
+raise notice'balance=%',r1.balance;
+raise notice'cno=%',r1.cno;
+c=c+1;
+end loop;
+if(c=0)then
+raise exception'customer name is invalid';
+end if;
+close c1;
+end
+$$
+language plpgsql;
+
+select exam('pranav');
+select exam('spider');
+3]
+
+create or replace function vscode() returns trigger
+as
+$$
+declare
+begin
+if(new.balance<'1000')then
+raise exception'Balance connot be less than 1000';
+end if;
+return new;
+end;
+$$
+language plpgsql;
+
+create trigger bye
+after update on account24
+for each row
+execute procedure vscode();
+
+update account24
+set balance='900'
+where a_no=101;
+
+---------------------------------------------------------------------------------------------------
+slip 6
+
+create table movie95(m_name varchar(20)primary key,release_year int,budget money);
+create table producer95(p_id int primary key,pname varchar(20),p_address varchar(20));
+create table mp95(m_name varchar(20)references movie95,p_id int references producer95);
+
+insert into movie95 values('solo_leaveling',2024,100000);
+insert into movie95 values('naruto',2023,300000);
+insert into movie95 values('attack_on_titans',2019,200000);
+
+insert into producer95 values(1,'pranav','shrirampur');
+insert into producer95 values(2,'nikhil','pune');
+insert into producer95 values(3,'prem','shrirampur');
+
+insert into mp95 values('solo_leaveling',1);
+insert into mp95 values('naruto',2);
+insert into mp95 values('attack_on_titans',3);
+insert into mp95 values('solo_leaveling',1);
+insert into mp95 values('attack_on_titans',2);
+
+select *from movie95;
+select*from producer95;
+select*from mp95;
+
+1]
+
+create or replace function moonlight(name producer95.pname%type)returns void
+as
+$$
+declare
+c int=0;
+begin
+select count(movie95.*) into c from movie95,producer95,mp95
+where movie95.m_name=mp95.m_name
+and producer95.p_id=mp95.p_id
+and producer95.pname=name;
+raise notice'movies produce by him=%',c;
+end;
+$$
+language plpgsql;
+
+select moonlight('pranav');
+
+2]
+
+create or replace function ak47(name movie95.m_name%type)returns void
+as
+$$
+declare
+r1 producer95.pname%type;
+c1 cursor for select producer95.pname from producer95,movie95,mp95
+where producer95.p_id=mp95.p_id
+and movie95.m_name=mp95.m_name
+and movie95.m_name=name;
+begin
+open c1;
+loop
+fetch c1 into r1;
+exit when not found;
+raise notice'name=%',r1;
+end loop;
+close c1;
+end;
+$$
+language plpgsql;
+
+select ak47('solo_leaveling');
+
+3]
+
+create or replace function obito()returns trigger
+as
+$$
+declare
+begin
+if(new.budget<'100000')then
+raise exception'we cannot made movie under 1 lakh noob increase price!!';
+end if;
+return new;
+end;
+$$
+language plpgsql;
+
+create trigger t67
+before insert on movie95
+for each row
+execute procedure obito();
+
+insert into movie95 values('attack_on_titans4',2020,20000);
+
+---------------------------------------------------------------------------------------------------
+slip 11
+
+create table customer32(cno int primary key,cname varchar(20),city varchar(20));
+create table account32(a_no int primary key,a_type varchar(20),opening_date date,balance money,cno int references customer32);
+
+
+insert into customer32 values(1,'pranav','shrirampur');
+insert into customer32 values(2,'om','nashik');
+insert into customer32 values(3,'mayur','pune');
+
+insert into account32 values(101,'saving','2022/10/05','15000',1);
+insert into account32 values(102,'current','2023/07/07','75000',2);
+insert into account32 values(103,'saving','2024/06/25','55000',3);
+insert into account32 values(104,'current','2022/08/20','95000',1);
+insert into account32 values(105,'saving','2021/04/15','45000',2);
+
+select *from customer32;
+select *from account32;
+
+1]
+create or replace function semister() returns void 
+as
+$$
+declare
+rec record;
+begin
+for rec in select a_no from account32
+where opening_date<'2023/07/07'
+loop
+raise notice'a_no=%',rec.a_no;
+end loop;
+end;
+$$
+language plpgsql;
+
+select semister();
+
+2]
+create or replace function pandu() returns void
+as
+$$
+declare
+r1 account32%rowtype;
+c1 cursor for select account32.* from account32,customer32
+where account32.cno=customer32.cno
+and customer32.city='pune';
+begin
+open c1;
+loop
+fetch c1 into r1;
+exit when not found;
+raise notice'a_no=%',r1.a_no;
+raise notice'a_type=%',r1.a_type;
+raise notice'opening_date=%',r1.opening_date;
+raise notice'balance=%',r1.balance;
+raise notice'cno=%',r1.cno;
+end loop;
+close c1;
+end;
+$$
+language plpgsql;
+
+select pandu();
+
+3]
+
+create or replace function helloworld()returns trigger
+as
+$$ 
+declare
+begin
+raise notice'account record is deleted';
+return old;
+end;
+$$
+language plpgsql;
+
+create trigger t76
+before delete on  account32
+for each row
+execute procedure helloworld();
+
+delete from account32
+where a_no=105;
+---------------------------------------------------------------------------------------------------
+slip 12
+
+create table department25(dno int primary key,dname varchar(20),city varchar(20));
+create table employee25(eno int primary key,ename varchar(20),salary money,dno int references department25);
+
+insert into department25 values(101,'software','shrirampur');
+insert into department25 values(102,'production','pune');
+insert into department25 values(103,'advertisement','nashik');
+insert into department25 values(104,'packing','shrirampur');
+
+
+insert into employee25 values(1,'pranav','40000',101);
+insert into employee25 values(2,'sai','70000',102);
+insert into employee25 values(3,'om','80000',103);
+insert into employee25 values(4,'sham','90000',101);
+insert into employee25 values(5,'didi','50000',102);
+
+select*from department25;
+select*from employee25;
+
+1]
+
+create or replace function rocket1(cname department25.city%type)returns int
+as
+$$
+declare
+c int=0;
+begin
+select count(*) into c from department25 
+where city=cname;
+return c;
+end;
+$$
+language plpgsql;
+
+select rocket1('shrirampur');
+
+2]
+
+create or replace function rider()returns void
+as
+$$
+declare
+r1 employee25.ename%type;
+c1 cursor for select employee25.ename from employee25,department25
+where employee25.dno=department25.dno
+and employee25.salary between'50000'and'90000'
+ order by department25.dname;
+begin
+open c1;
+loop
+fetch c1 into r1;
+exit when not found;
+raise notice'name=%',r1;
+end loop;
+close c1;
+end;
+$$
+language plpgsql;
+
+select rider();
+
+3]
+
+create or replace function z900() returns trigger
+as
+$$
+declare
+begin
+if(new.salary<'0')then
+raise exception'salary cannot be negative!';
+end if;
+return new;
+end;
+$$
+language plpgsql;
+
+create trigger tri631
+before insert on employee25
+for each row
+execute procedure z900();
+
+insert into employee25 values(9,'pranav','-2',101);
+---------------------------------------------------------------------------------------------------
+slip 13
+
+create table project44(pno int primary key,pname varchar(20),ptype varchar(20),duration int);
+create table employee44(eno int primary key,ename varchar(20),qualification varchar(15),salary float,joining_date date);
+create table ep44(pno int references project44,eno int references employee44,start_date date,no_of_hours_worked int);
+
+insert into project44 values(1,'app_making','private',80);
+insert into project44 values(2,'website_making','private',70);
+insert into project44 values(3,'road_making','goverment',100);
+
+insert into employee44 values(101,'pranav','mcs','10000','2022\03\17');
+insert into employee44 values(102,'mayur','bcs','70000','2024\10\08');
+insert into employee44 values(103,'krushna','bca','5000','2023\07\26');
+
+insert into ep44 values(1,101,'2022\03\20',20);
+insert into ep44 values(2,102,'2024\10\10',50);
+insert into ep44 values(3,103,'2023\07\28',30);
+insert into ep44 values(1,101,'2022\04\8',70);
+insert into ep44 values(2,102,'2024\11\4',60);
+
+select*from project44;
+select*from employee44;
+select*from ep44;
+1]
+
+create or replace function yellowflash(name project44.pname%type)returns int 
+as
+$$
+declare
+c int=0;
+begin
+select count(employee44.*) into c from employee44,project44,ep44
+where employee44.eno=ep44.eno
+and project44.pno=ep44.pno
+and project44.pname=name;
+return c;
+end;
+$$
+language plpgsql;
+
+select yellowflash('app_making');
+
+2]
+
+create or replace function notepad() returns void
+as
+$$
+declare
+r1 project44.pname%type;
+c1 cursor for select pname from project44
+where duration>70;
+begin
+open c1;
+loop
+fetch c1 into r1;
+exit when not found;
+raise notice'project name:%',r1;
+end loop;
+close c1;
+end;
+$$
+language plpgsql;
+
+select notepad();
+
+3]
+
+create or replace function slip()returns trigger 
+as
+$$
+declare
+begin
+if(new.no_of_hours_worked<0)then
+raise exception'no_of_hours_worked cannot be negative';
+end if;
+return new;
+end;
+$$
+language plpgsql;
+
+create trigger t77
+before insert or update on ep44
+for each row
+execute procedure slip();
+
+insert into ep44 values(3,103,'2024\11\4',-1);
+
+---------------------------------------------------------------------------------------------------
+slip14
+
+create table customer75(cno int primary key,cname varchar(20),city varchar(20));
+create table account75(accno int primary key,acc_type varchar(20),opening_date date,balance money,cno int references customer75);
+
+insert into customer75 values(1,'pranav','shrirampur');
+insert into customer75 values(2,'prem','pune');
+insert into customer75 values(3,'mayur','shrirampur');
+
+insert into account75 values(101,'saving','2022\10\06','10000',1);
+insert into account75 values(102,'current','2023\11\19','20000',2);
+insert into account75 values(103,'saving','2024\12\27','30000',3);
+insert into account75 values(104,'current','2022\5\29','70000',1);
+insert into account75 values(105,'saving','2019\7\16','50000',2);
+
+select *from customer75;
+select *from account75;
+
+1]
+
+create or replace function rcb(type account75.acc_type%type)returns void
+as
+$$
+declare
+c money;
+begin
+select max(balance)into c from account75
+where acc_type=type;
+raise notice'max balance=%',c;
+end;
+$$
+language plpgsql;
+
+select rcb('current');
+
+2]
+
+create or replace function water()returns void
+as
+$$
+declare
+r1 account75%rowtype;
+c1 cursor for select account75.* from account75,customer75
+where account75.cno=customer75.cno
+and customer75.city='pune';
+begin
+open c1;
+loop
+fetch c1 into r1;
+exit when not found;
+raise notice'accno=%',r1.accno;
+raise notice'acc_type=%',r1.acc_type;
+raise notice'opening_date=%',r1.opening_date;
+raise notice'balance=%',r1.balance;
+raise notice'cno=%',r1.cno;
+end loop;
+close c1;
+end;
+$$
+language plpgsql;
+
+select water();
+
+3]
+
+create or replace function abcd() returns trigger
+as
+$$
+declare
+begin
+if(new.balance<'500')then
+raise exception'balance cannot be less than 500';
+end if;
+return new;
+end;
+$$
+language plpgsql;
+
+create trigger t67
+before insert on account75
+for each row
+execute procedure abcd();
+
+insert into account75 values(107,'saving','2019\7\16','400',2);
+
+---------------------------------------------------------------------------------------------------
+slip 15
+
+create table department100(dno int primary key,dname varchar(20),city varchar(20));
+create table employee100(eno int primary key,ename varchar(20),salary float,dno int references department100);
+
+insert into department100 values(101,'account','shrirampur');
+insert into department100 values(102,'packing','pune');
+insert into department100 values(103,'testing','shrirampur');
+
+insert into employee100 values(1,'pranav','10000',101);
+insert into employee100 values(2,'mayur','50000',102);
+insert into employee100 values(3,'om','70000',103);
+insert into employee100 values(4,'sai','60000',101);
+insert into employee100 values(5,'ram','90000',102);
+
+select*from department100;
+select*from employee100;
+
+1]
+create or replace function adhav(name department100.dname%type)returns void
+as
+$$
+declare
+salavg float=0;
+begin
+select avg(salary)into salavg from employee100,department100
+where employee100.dno=department100.dno
+and department100.dname=name;
+raise notice'average salary=%',salavg;
+end;
+$$
+language plpgsql;
+
+select adhav('account');
+2]
+
+create or replace function coder()returns void
+as
+$$
+declare
+r1 employee100.ename%type;
+c1 cursor for select employee100.ename from employee100,department100
+where department100.dno=employee100.dno
+and department100.dname='account';
+begin
+open c1;
+loop
+fetch c1 into r1;
+exit when not found;
+raise notice'name=%',r1;
+end loop;
+close c1;
+end;
+$$
+language plpgsql;
+
+select coder();
+
+3]
+
+create or replace function fun55() returns trigger
+as
+$$
+declare
+begin
+raise notice'emp record is being updated';
+return new;//if we return old its not updated......................!!
+end;
+$$
+language plpgsql;
+
+create trigger jah
+before update on employee100
+for each row
+execute procedure fun55(); 
+
+update employee100
+set ename='spidy'
+where eno=1;
+
+---------------------------------------------------------------------------------------------------
+slip 16
+
+create table item22(itemno int primary key,itemname varchar(20));
+create table supplier22(supplier_no int primary key,suppliner_name varchar(20),city varchar(20));
+create table isu22(itemno int references item22,supplier_no int references supplier22,rate money,quantity int);
+
+insert into item22 values(1,'cpu');
+insert into item22 values(2,'keyboard');
+insert into item22 values(3,'mouse');
+
+insert into supplier22 values(101,'pranav','shrirampur');
+insert into supplier22 values(102,'mayur','pune');
+insert into supplier22 values(103,'om','shrirampur');
+
+insert into isu22 values(1,101,'10000',50);
+insert into isu22 values(2,102,'5000',40);
+insert into isu22 values(3,103,'10000',70);
+insert into isu22 values(2,101,'4000',80);
+insert into isu22 values(3,102,'5000',10);
+insert into isu22 values(2,102,'40',6);
+
+select*from item22;
+select*from supplier22;
+select*from isu22;
+
+1]
+
+create or replace function mom(cname supplier22.city%type)returns int
+as
+$$
+declare
+c int=0;
+begin
+select count(*)into c from supplier22 where city=cname;
+return c;
+end;
+$$
+language plpgsql;
+
+select mom('pune');
+
+2]
+
+create or replace function dad()returns void 
+as
+$$
+declare
+r1 item22.itemname%type;
+c1 cursor for select item22.itemname from item22,isu22
+where item22.itemno=isu22.itemno
+and isu22.rate>'500';
+begin
+open c1;
+loop
+fetch c1 into r1;
+exit when not found;
+raise notice'name=%',r1;
+end loop;
+close c1;
+end;
+$$
+language plpgsql;
+
+select dad();
+
+3]
+
+create or replace function sister()returns trigger 
+as
+$$
+declare
+begin
+if(new.rate<'50')then
+raise exception'rate cannot be less than 50';
+end if;
+return new;
+end;
+$$
+language plpgsql;
+
+
+create trigger t52
+before insert or update on isu22
+for each row
+execute procedure sister();
+
+insert into isu22 values(4,103,'40',70);
+
+---------------------------------------------------------------------------------------------------
+slip 17
+
+create table student78(roll_no int primary key,sname varchar(20),sclass char(10));
+create table teacher78(t_no int primary key,tname char(20),experience int);
+create table st78(roll_no int references student78,t_no int references teacher78,subject varchar(20));
+
+insert into student78 values(1,'pranav','fybcs');
+insert into student78 values(2,'om','sybcs');
+insert into student78 values(3,'sai','fybca');
+
+insert into teacher78 values(101,'hurule_mam',5);
+insert into teacher78 values(102,'pawar_mam',10);
+insert into teacher78 values(103,'shinde_mam',7);
+
+insert into st78 values(1,101,'c_language');
+insert into st78 values(2,101,'rdbms');
+insert into st78 values(3,101,'java');
+insert into st78 values(1,101,'html');
+insert into st78 values(2,102,'mongodb');
+
+select*from student78;
+select*from teacher78;
+select*from st78;
+
+1]
+
+create or replace function ironman()returns trigger
+as
+$$
+declare
+begin
+if(new.roll_no<=0)then
+raise exception'invalid roll no';
+end if;
+return new;
+end;
+$$
+language plpgsql;
+
+create trigger t20
+before insert on student78
+for each row
+execute procedure ironman();
+
+insert into student78 values(-4,'ram','fybca');
+
+2]
+
+create or replace function funname(name student78.sname%type)returns void
+as
+$$
+declare
+r1 teacher78.tname%type;
+c1 cursor for select teacher78.tname from teacher78,student78,st78
+where teacher78.t_no=st78.t_no
+and student78.roll_no=st78.roll_no
+and student78.sname=name;
+begin
+open c1;
+loop
+fetch c1 into r1;
+exit when not found;
+raise notice'teacher name=%',r1;
+end loop;
+close c1;
+end;
+$$
+language plpgsql;
+
+select funname('om');
+
+3]
+
+create or replace function experi()returns int
+as
+$$
+declare
+c int=0;
+begin
+select count(*)into c from teacher78 where experience>5;
+return c;
+end;
+$$
+language plpgsql;
+
+select experi();
+---------------------------------------------------------------------------------------------------
+slip 18
+
+create table student101(roll_no int primary key,sname varchar(20),sclass char(10));
+create table teacher101(t_no int primary key,tname char(20),experience int);
+create table st101(roll_no int references student101,t_no int references teacher101,subject varchar(20));
+
+insert into student101 values(1,'pranav','fybcs');
+insert into student101 values(2,'om','sybcs');
+insert into student101 values(3,'sai','fybca');
+
+insert into teacher101 values(101,'hurule_mam',5);
+insert into teacher101 values(102,'pawar_mam',10);
+insert into teacher101 values(103,'shinde_mam',7);
+
+insert into st101 values(1,101,'c_language');
+insert into st101 values(2,101,'rdbms');
+insert into st101 values(3,101,'java');
+insert into st101 values(1,101,'html');
+insert into st101 values(2,102,'mongodb');
+
+select*from student101;
+select*from teacher101;
+select*from st101;
+
+1]
+
+create or replace function love()returns trigger 
+as
+$$
+declare
+begin
+if(new.experience<4)then
+raise exception'exp miminum 4 years requaired';
+end if;
+return new;
+end;
+$$
+language plpgsql;
+
+
+create trigger tri101
+before insert on teacher101
+for each row
+execute procedure love();
+
+insert into teacher101 values(105,'pranav_sir',3);
+
+2]
+
+create or replace function blood(name student101.sname%type)returns void
+as
+$$
+declare
+r1 st101.subject%type;
+c1 cursor for select st101.subject from st101,student101
+where st101.roll_no=student101.roll_no
+and student101.sname=name;
+begin
+open c1;
+loop
+fetch c1 into r1;
+exit when not found;
+raise notice'subject name=%',r1;
+end loop;
+close c1;
+end;
+$$
+language plpgsql;
+
+select blood('pranav');
+
+3]
+
+create or replace function gold() returns void 
+as
+$$
+declare
+rec record;
+begin
+for rec in select * from teacher101 where experience=(select
+max(experience) from teacher101)
+loop
+raise notice't_no=%  tname=%  experience=%',rec.t_no,rec.tname,rec.experience;
+end loop;
+end;
+$$
+language plpgsql;
+
+select gold();
+
+---------------------------------------------------------------------------------------------------
+slip 19
+
+create table project50(pno int primary key,pname varchar(20),ptype varchar(20),duration int);
+create table employee50(eno int primary key,ename varchar(20),salary float,joining_date date);
+create table ep50(pno int references project50,eno int references employee50,start_date date);
+
+insert into project50 values(1,'app_making','private',80);
+insert into project50 values(2,'website_making','private',70);
+insert into project50 values(3,'road_making','goverment',100);
+
+insert into employee50 values(101,'pranav','10000','2022\03\17');
+insert into employee50 values(102,'mayur','70000','2024\10\08');
+insert into employee50 values(103,'krushna','5000','2023\07\26');
+
+insert into ep50 values(1,101,'2022\03\20');
+insert into ep50 values(2,102,'2024\10\10');
+insert into ep50 values(3,103,'2023\07\28');
+insert into ep50 values(1,101,'2022\04\8');
+insert into ep50 values(2,102,'2024\11\4');
+
+select*from project50;
+select *from employee50;
+select* from ep50;
+
+1]
+
+create or replace function bad_boy(name employee50.ename%type)returns void
+as
+$$
+declare
+r1 project50.pname%type;
+c1 cursor for select project50.pname from project50, employee50, ep50
+where project50.pno = ep50.pno
+and employee50.eno = ep50.eno
+and employee50.ename = name;
+begin
+open c1;
+loop
+fetch c1 into r1;
+exit when not found;
+raise notice'project name=%',r1;
+end loop;
+close c1;
+end;
+$$
+language plpgsql;
+
+select bad_boy('pranav');
+
+2]
+
+create or replace function cemp()returns int
+as
+$$
+declare
+c int=0;
+begin
+select count(*) into c from employee50 where joining_date <'2024-10-08';
+return c;
+end;
+$$
+language plpgsql;
+
+select cemp();
+
+3]
+
+create or replace function manish()returns trigger
+as
+$$
+declare
+begin
+if(new.salary<'0')then
+raise exception'salary cannot be negative';
+end if;
+return new;
+end;
+$$
+language plpgsql;
+
+create trigger t86
+before insert on employee50
+for each row
+execute procedure manish();
+
+insert into employee50 values(105,'spider','-5','2022\03\17');
+
+---------------------------------------------------------------------------------------------------
+slip 20
+
+create table project90(pno int primary key,pname varchar(20),ptype varchar(20),duration int);
+create table employee90(empno int primary key,ename varchar(20),joining_date date);
+create table ep90(pno int references project90,empno int references employee90,start_date date);
+
+insert into project90 values(1,'app_making','private',80);
+insert into project90 values(2,'website_making','private',70);
+insert into project90 values(3,'road_making','goverment',100);
+
+insert into employee90 values(101,'pranav','2022\03\17');
+insert into employee90 values(102,'mayur','2024\10\08');
+insert into employee90 values(103,'krushna','2023\07\26');
+
+insert into ep90 values(1,101,'2022\03\20');
+insert into ep90 values(2,102,'2024\10\10');
+insert into ep90 values(3,103,'2023\07\28');
+insert into ep90 values(1,101,'2022\04\8');
+insert into ep90 values(2,102,'2024\11\4');
+
+select*from project90;
+select*from employee90;
+select*from ep90;
+
+1]
+
+create or replace function mind(num employee90.empno%type)returns int 
+as
+$$
+declare
+c int=0;
+begin
+select count(project90.*)into c from project90,employee90,ep90
+where project90.pno=ep90.pno
+and employee90.empno=ep90.empno
+and employee90.empno=num;
+if(c=0)then
+raise exception'invalid emp no';
+end if;
+return c;
+end;
+$$
+language plpgsql;
+
+select mind(101);
+select mind(1011);
+
+2]
+
+create or replace function life()returns trigger as
+$$
+declare
+begin
+if(new.duration<=0)then
+raise exception'duration cannot be negative';
+end if;
+return new;
+end;
+$$
+language plpgsql;
+
+create trigger t69
+before insert or update on project90
+for each row
+execute procedure life();
+
+insert into project90 values(5,'school_making','goverment',-5);
+
+3]
+
+create or replace function bad_girl(name project90.pname%type)returns void
+as
+$$
+declare
+r1 employee90.ename%type;
+c1 cursor for select employee90.ename from employee90, project90,ep90
+where employee90.empno=ep90.empno
+and project90.pno=ep90.pno
+and project90.pname=name;
+begin
+open c1;
+loop
+fetch c1 into r1;
+exit when not found;
+raise notice'emp name=%',r1;
+end loop;
+close c1;
+end;
+$$
+language plpgsql;
+
+select bad_girl('app_making');
+
+---------------------------------------------------------------------------------------------------
+slip 21
+
+create table area25(aid int primary key,aname varchar(20),area_type varchar(20));
+create table person25(pno int primary key,name varchar(20),birthdate date,income money,aid int references area25);
+
+
+insert into area25 values(101,'river_area','rural');
+insert into area25 values(102,'collage_area','urban');
+insert into area25 values(103,'garden_area','rural');
+
+insert into person25 values(1,'pranav','2005\10\07','12000',101);
+insert into person25 values(2,'om','2007\12\17','22000',102);
+insert into person25 values(3,'sai','2005\09\14','10000',103);
+insert into person25 values(4,'ram','2003\02\15','30000',101);
+insert into person25 values(5,'sham','2004\06\09','50000',102);
+
+select*from area25;
+select*from person25;
+1]
+create or replace function sweetheart(m int)returns void
+as
+$$
+declare
+r1 person25.name%type;
+c1 cursor for select name from person25 where extract(month from birthdate)=m;
+begin
+open c1;
+loop
+fetch c1 into r1;
+exit when not found;
+raise notice'name=%',r1;
+end loop;
+close c1;
+end;
+$$
+language plpgsql;
+
+select sweetheart(10);
+
+2]
+create or replace function sasuke()returns trigger
+as
+$$
+declare
+begin
+if NEW.aname is null or NEW.aname=''then 
+raise exception'area name cannot be null';
+end if;
+return new;
+end;
+$$
+language plpgsql;
+
+create trigger tri078
+before insert on area25
+for each row
+execute procedure sasuke();
+
+INSERT INTO area25 VALUES (108,'', 'rural');
+
+3]
+
+create or replace function gamer2(name1 area25.aname%type)returns int
+as
+$$
+declare
+c int=0;
+begin
+select count(person25.*)into c from person25,area25
+where area25.aid=person25.aid
+and area25.aname=name1;
+return c;
+end;
+$$
+language plpgsql;
+
+select gamer2('river_area');
+
+---------------------------------------------------------------------------------------------------
+slip 22
+
+create table area32(aid int primary key,aname varchar(20),area_type varchar(20));
+create table person32(pno int primary key,pname varchar(20),birthdate date,income money,aid int references area32);
+
+
+insert into area32 values(101,'river_area','rural');
+insert into area32 values(102,'collage_area','urban');
+insert into area32 values(103,'garden_area','rural');
+
+insert into person32 values(1,'pranav','2005\10\07','12000',101);
+insert into person32 values(2,'om','2007\12\17','22000',102);
+insert into person32 values(3,'sai','2005\09\14','10000',103);
+insert into person32 values(4,'ram','2003\02\15','30000',101);
+insert into person32 values(5,'sham','2004\06\09','50000',102);
+
+select*from area32;
+select*from person32;
+
+1]
+create or replace function naruto2()returns void
+as
+$$
+declare
+r1 person32.pno%type;
+c1 cursor for select person32.pno from person32,area32
+where person32.aid=area32.aid
+and area32.area_type='rural';
+begin
+open c1;
+loop
+fetch c1 into r1;
+exit when not found;
+update person32
+set income=income*10
+where pno=r1;
+end loop;
+close c1;
+end;
+$$
+language plpgsql;
+
+2]
+
+create or replace function race()returns trigger 
+as
+$$
+declare
+begin
+raise notice'person record is deleted';
+return old;
+end;
+$$
+language plpgsql;
+
+create trigger samu13
+before delete on person32
+for each row
+execute procedure race();
+
+delete from person32
+where pno=2;
+
+3]
+
+create or replace function ss()returns void as
+$$
+declare
+r1 person32.pname%type;
+c1 cursor for select person32.pname from person32,area32
+where person32.aid=area32.aid
+and area32.area_type='urban';
+begin
+open c1;
+loop
+fetch c1 into r1;
+exit when not found;
+raise notice'name=%',r1;
+end loop;
+close c1;
+end;
+$$
+language plpgsql;
+
+select ss();
+
+---------------------------------------------------------------------------------------------------
+slip 26
+
+create table car66(c_no int primary key,owner varchar(20),model varchar(20),color varchar(20));
+create table driver66(driver_no int primary key,driver_name varchar(20),license_no int,d_age int,salary float);
+create table cd66(c_no int references car66,driver_no int references driver66);
+
+insert into car66 values(101,'pranav','lambo','white');
+insert into car66 values(102,'mayur','ferari','orange');
+insert into car66 values(103,'shubham','kavasaki','green');
+
+insert into driver66 values(1,'prem',1001,30,50000);
+insert into driver66 values(2,'nikhil',1002,20,70000);
+insert into driver66 values(3,'om',1003,40,30000);
+
+insert into cd66 values(101,1);
+insert into cd66 values(102,2);
+insert into cd66 values(103,3);
+insert into cd66 values(103,1);
+insert into cd66 values(101,2);
+
+select*from car66;
+select*from driver66;
+select*from cd66;
+
+1]
+create or replace function star(name driver66.driver_name%type)returns int 
+as
+$$
+declare
+c int=0;
+begin
+select count(car66.*)into c from car66,driver66,cd66
+where car66.c_no=cd66.c_no
+and driver66.driver_no=cd66.driver_no
+and driver66.driver_name=name;
+return c;
+end;
+$$
+language plpgsql;
+
+select star('prem');
+
+2]
+
+create or replace function cloud(colour car66.color%type)returns void
+as
+$$
+declare
+r1 car66.owner%type;
+c1 cursor for select owner from car66 where color=colour;
+begin
+open c1;
+loop
+fetch c1 into r1;
+exit when not found;
+raise notice'owner name=%',r1;
+end loop;
+close c1;
+end;
+$$
+language plpgsql;
+ 
+select cloud('white');
+
+3]
+
+create or replace function arora()returns trigger 
+as
+$$
+declare
+begin
+if(new.salary<=0)then
+raise exception'salary cannot be negativr or zero';
+end if;
+return new;
+end;
+$$
+language plpgsql;
+
+
+create trigger t28
+before insert or update on driver66
+for each row 
+execute procedure arora();
+
+insert into driver66 values(5,'spider',1004,18,-8000);
+
+--------------------------------------------------------------------------------------------------- 
+slip 28
+
+create table student20(rollno int primary key,name varchar(20),class varchar(20));
+create table subject20(scode varchar(20) primary key,subject_name varchar(20));
+create table ss20(rollno int references student20,scode varchar references subject20,marks_scored int);
+
+insert into student20 values(1,'pranav','fybcs');
+insert into student20 values(2,'niddhi','sybcs');
+insert into student20 values(3,'kartik','tybcs');
+
+insert into subject20 values(101,'c_language');
+insert into subject20 values(102,'rdbms');
+insert into subject20 values(103,'java');
+
+insert into ss20 values(1,101,80);
+insert into ss20 values(2,102,60);
+insert into ss20 values(3,103,70);
+insert into ss20 values(1,102,55);
+insert into ss20 values(2,103,70);
+
+select*from student20;
+select*from subject20;
+select*from ss20;
+
+1]
+
+create or replace function xyz(div student20.class%type)returns void 
+as
+$$
+declare
+r1 student20%rowtype;
+c1 cursor for select * from student20 where class=div;
+begin
+open c1;
+loop
+fetch c1 into r1;
+exit when not found;
+raise notice'rollno=%',r1.rollno;
+raise notice'name=%',r1.name;
+raise notice'class=%',r1.class;
+end loop;
+close c1;
+end;
+$$
+language plpgsql;
+
+select xyz('fybcs');
+
+2][hard question]
+
+create or replace function cute()returns void 
+as
+$$
+declare
+rec record;
+begin
+for rec in select subject20.subject_name,avg(ss20.marks_scored) from ss20,student20,subject20
+where student20.rollno=ss20.rollno
+and subject20.scode=ss20.scode
+group by subject20.subject_name
+order by subject20.subject_name
+loop
+raise notice'subject_name=% avg_marks_scored=%',rec.subject_name,rec.avg;
+end loop;
+end;
+$$
+language plpgsql;
+
+3]
+create or replace function insta()returns trigger
+as
+$$
+declare
+begin
+if(new.marks_scored<0)then
+raise exception'marks cannot be negative';
+end if;
+return new;
+end;
+$$
+language plpgsql;
+
+create trigger t46
+before insert or update on ss20
+for each row
+execute procedure insta();
+
+insert into ss20 values(3,101,-1);
+
+---------------------------------------------------------------------------------------------------
+
+slip 30
+
+create table customer99(cno int primary key,cname varchar(20),city varchar(20));
+create table account99(a_no int primary key,a_type varchar(20),opening_date date,balance money,cno int references customer99);
+
+
+insert into customer99 values(1,'pranav','shrirampur');
+insert into customer99 values(2,'om','nashik');
+insert into customer99 values(3,'mayur','pune');
+
+insert into account99 values(101,'saving','2022/10/05','15000',1);
+insert into account99 values(102,'current','2023/07/07','75000',2);
+insert into account99 values(103,'saving','2024/06/25','55000',3);
+insert into account99 values(104,'current','2022/08/20','95000',1);
+insert into account99 values(105,'saving','2021/04/15','45000',2);
+
+
+1]
+
+create or replace function facebook(name customer99.cname%type)returns int
+as
+$$
+declare
+c int=0;
+begin
+select count(account99.*)into c from account99,customer99
+where customer99.cno=account99.cno
+and customer99.cname=name;
+return c;
+end;
+$$
+language plpgsql;
+
+select facebook('pranav');
+
+2]
+
+create or replace function whatsapp(name customer99.city%type)returns void 
+as
+$$
+declare
+r1 customer99%rowtype;
+c1 cursor for select *from customer99 where city=name;
+begin
+open c1;
+loop
+fetch c1 into r1;
+exit when not found;
+raise notice'cno=%',r1.cno;
+raise notice'cname=%',r1.cname;
+raise notice'city=%',r1.city;
+end loop;
+close c1;
+end;
+$$
+language plpgsql;
+
+select whatsapp('pune');
+
+3]
+
+create or replace function twitter()returns trigger
+as
+$$
+declare
+begin
+if(old.a_type='saving')then
+raise exception'sorry u cannot delete saving account details';
+end if;
+return old;
+end;
+$$
+language plpgsql;
+
+create trigger t27
+before delete on account99
+for each row
+execute procedure twitter();
+
+delete from account99 where a_no=101;
+---------------------------------------------------------------------------------------------------
+slip 31
+
+create table department39(dno int primary key,dname varchar(20),city varchar(20));
+create table employee39(eno int primary key,ename varchar(20),salary money,dno int references department39);
+
+insert into department39 values(101,'software','shrirampur');
+insert into department39 values(102,'production','pune');
+insert into department39 values(103,'advertisement','nashik');
+insert into department39 values(104,'packing','shrirampur');
+
+
+insert into employee39 values(1,'pranav','40000',101);
+insert into employee39 values(2,'sai','70000',102);
+insert into employee39 values(3,'om','80000',103);
+insert into employee39 values(4,'sham','90000',101);
+insert into employee39 values(5,'didi','50000',102);
+
+1]
+
+create or replace function gara(name department39.dname%type)returns int 
+as
+$$
+declare
+c int=0;
+begin
+select count(employee39.*)into c from employee39,department39
+where employee39.dno=department39.dno
+and department39.dname=name;
+return c;
+end;
+$$
+language plpgsql;
+
+select gara('software');
+
+2]
+
+create or replace function wish(sal employee39.salary%type)returns void
+as
+$$
+declare
+r1 employee39.ename%type;
+c1 cursor for select ename from employee39 where salary>sal;
+begin
+open c1;
+loop
+fetch c1 into r1;
+exit when not found;
+raise notice'nmae=%',r1;
+end loop;
+close c1;
+end;
+$$
+language plpgsql;
+
+select wish('70,000.00');
+
+3]
+
+create or replace function sea()returns trigger
+as
+$$
+declare 
+begin
+raise notice'record successfully insert';
+return new;
+end;
+$$
+language plpgsql;
+
+create trigger t54
+after insert on employee39
+for each row
+execute procedure sea();
+
+insert into employee39 values(6,'dada','50000',103);
+
+---------------------------------------------------------------------------------------------------
+slip32
+
+create table area27(aname varchar(20) primary key,area_type varchar(20));
+create table person27(pnumber int primary key,pname varchar(20),birthdate date,income money,aname varchar references area27);
+
+insert into area27 values('river_area','rural');
+insert into area27 values('collage_area','urban');
+insert into area27 values('garden_area','rural');
+
+insert into person27 values(1,'pranav','2005\10\07','12000','river_area');
+insert into person27 values(2,'om','2007\12\17','22000','collage_area');
+insert into person27 values(3,'sai','2005\09\14','10000','garden_area');
+insert into person27 values(4,'ram','2003\02\15','30000','river_area');
+insert into person27 values(5,'sham','2004\06\09','50000','collage_area');
+
+select*from area27;
+select*from person27;
+
+1]
+
+create or replace function born(m int)returns int
+as
+$$
+declare
+c int=0;
+begin
+select count(*)into c from person27 where extract(month from birthdate)=m;
+return c;
+end;
+$$
+language plpgsql;
+
+select born(10);
+
+2]
+
+create or replace function glory()returns trigger 
+as
+$$
+declare
+begin
+if(old.aname='river_area')then
+raise exception'u cannot delete person from river_area';
+end if;
+return old;
+end;
+$$
+language plpgsql;
+
+create trigger t53
+before delete on person27
+for each row
+execute procedure glory();
+
+delete from person27
+where pnumber=1;
+
+3]
+
+create or replace function spiderman(atype area27.area_type%type)returns int
+as
+$$
+declare
+c int;
+c1 cursor for select count(*)from person27,area27 
+where area27.aname=person27.aname
+and area27.area_type=atype;
+begin
+open c1;
+fetch c1 into c;
+close c1;
+return c;
+end;
+$$
+language plpgsql;
+
+---------------------------------------------------------------------------------------------------
+
+slip 33
+
+create table car136(c_no int primary key,owner varchar(20),model varchar(20),color varchar(20));
+create table driver136(driver_no int primary key,driver_name varchar(20),license_no int,d_age int,salary float);
+create table cd136(c_no int references car136,driver_no int references driver136);
+
+insert into car136 values(101,'pranav','lambo','white');
+insert into car136 values(102,'mayur','ferari','orange');
+insert into car136 values(103,'shubham','kavasaki','green');
+
+insert into driver136 values(1,'prem',1001,30,50000);
+insert into driver136 values(2,'nikhil',1002,20,70000);
+insert into driver136 values(3,'om',1003,40,30000);
+
+insert into cd136 values(101,1);
+insert into cd136 values(102,2);
+insert into cd136 values(103,3);
+insert into cd136 values(103,1);
+insert into cd136 values(101,2);
+
+select*from car136;
+select*from driver136;
+select*from cd136;
+
+1]
+create or replace function ring(name car136.model%type)returns void
+as
+$$
+declare
+rec record;
+begin
+for rec in select * from car136 where model=name
+loop
+raise notice'c_no=% owner=% model=% color=%',rec.c_no,rec.owner,rec.model,rec.color;
+end loop;
+end;
+$$
+language plpgsql;
+
+select ring('lambo');
+
+2]
+create or replace function sunraise()returns trigger 
+as
+$$
+declare
+begin
+if(new.d_age<21)then
+raise exception'deivers age cannot be less than 21';
+end if;
+return new;
+end;
+$$
+language plpgsql;
+
+
+create trigger t64
+before insert or update on driver136
+for each row
+execute procedure sunraise();
+
+
+insert into driver136 values(4,'kunal',1003,20,30000);
+
+
+3]
+
+create or replace function warden(name driver136.driver_name%type)returns void 
+as
+$$
+declare
+c int=0;
+r1 car136%rowtype;
+c1 cursor for select car136.* from car136,driver136,cd136
+where car136.c_no=cd136.c_no
+and driver136.driver_no=cd136.driver_no
+and driver136.driver_name=name;
+begin
+open c1;
+loop
+fetch c1 into r1;
+exit when not found;
+raise notice'c_no=%',r1.c_no;
+raise notice'owner=%',r1.owner;
+raise notice'model=%',r1.model;
+raise notice'color=%',r1.color;
+c=c+1;
+end loop;
+if(c=0)then
+raise exception'invalid driver name';
+end if;
+close c1;
+end;
+$$
+language plpgsql;
+
+
+ select warden('prem');
+---------------------------------------------------------------------------------------------------
+slip 35
+
+create table project73(pno int primary key,pname char(20),ptype char(20),duration int);
+create table employee73(empno int primary key,ename char(20),joining_date date);
+create table ep73(pno int references project73,empno int references employee73,start_date date);
+
+insert into project73 values(1,'app_making','private',80);
+insert into project73 values(2,'website_making','private',70);
+insert into project73 values(3,'road_making','goverment',100);
+
+insert into employee73 values(101,'pranav','2022\03\17');
+insert into employee73 values(102,'mayur','2024\10\08');
+insert into employee73 values(103,'krushna','2023\07\26');
+
+insert into ep73 values(1,101,'2022\03\20');
+insert into ep73 values(2,102,'2024\10\10');
+insert into ep73 values(3,103,'2023\07\28');
+insert into ep73 values(1,101,'2022\04\8');
+insert into ep73 values(2,102,'2024\11\4');
+
+
+
+select*from project73;
+select *from employee73;
+select*from ep73;
+
+
+1]
+
+create or replace function senorita(protype project73.ptype%type)returns void
+as
+$$
+declare
+rec record;
+c int=0;
+begin
+for rec in select pname from project73 where ptype=protype
+loop
+raise notice'project name=%',rec.pname;
+c=c+1;
+end loop;
+if(c=0)then
+raise exception'invalid project type';
+end if;
+end;
+$$
+language plpgsql;
+
+
+select senorita('private');
+
+
+2]
+
+create or replace function program()returns trigger
+as
+$$
+declare
+begin
+if(new.duration>0)then
+raise notice'INSERT IS COMPLETE.';
+else
+raise exception'duration cannot be less than zero noob';
+end if ;
+return new;
+end;
+$$
+language plpgsql;
+
+create trigger t71
+before insert or update on project73
+for each row
+execute procedure program();
+
+insert into project73 values(5,'road_making','goverment',-4);
+
+
+3]
+create or replace function doremon(name project73.pname%type)returns void
+as
+$$
+declare
+r1 employee73.ename%type;
+c1 cursor for select employee73.ename from employee73,project73,ep73
+where employee73.empno=ep73.empno
+and project73.pno=ep73.pno
+and project73.pname=name;
+begin
+open c1;
+loop
+fetch c1 into r1;
+exit when not found;
+raise notice'emp name=%',r1;
+end loop;
+end;
+$$
+language plpgsql;
+
+select doremon('app_making');
+---------------------------------------------------------------------------------------------------
+slip 39
+
+create table newspaper80(title varchar(20) primary key,language varchar(20),publisher varchar(20),cost money);
+create table city80(pincode varchar(6) primary key,name varchar(20),state varchar(20));
+create table nc(title varchar references newspaper80,pincode varchar references city80,daily_required int);
+
+
+insert into newspaper80 values('education','english','pranav','10');
+insert into newspaper80 values('sport','marathi','prem','5');
+insert into newspaper80 values('politics','hindi','mayur','10');
+
+
+insert into city80 values('413718','shrirampur','maharashtra');
+insert into city80 values('413719','ayodhya','up');
+insert into city80 values('413720','indore','mp');
+
+insert into nc values('education','413718',50);
+insert into nc values('sport','413719',20);
+insert into nc values('politics','413720',40);
+insert into nc values('education','413718',10);
+insert into nc values('politics','413720',70);
+
+select*from newspaper80;
+select *from city80;
+select*from nc;
+
+1]
+
+create or replace function shiro(cname city80.name%type)returns void
+as
+$$
+declare
+c int=0;
+rec record;
+begin
+for rec in select newspaper80.title from newspaper80,city80,nc
+where newspaper80.title=nc.title
+and city80.pincode=nc.pincode
+and city80.name=cname
+loop
+raise notice'name=%',rec.title;
+c=c+1;
+end loop;
+if(c=0)then
+raise exception'invalid city name';
+end if;
+end;
+$$
+language plpgsql;
+
+ select shiro('shrirampur');
+
+2]
+
+create or replace function india()returns trigger 
+as
+$$
+declare
+begin
+if(old.state='maharashtra')then
+raise exception'u cannot delete record of citys which belongs to maharashra state ';
+end if;
+return old;
+end;
+$$
+language plpgsql;
+
+
+create trigger t17
+before delete on city80
+for each row
+execute procedure india();
+
+delete from city80
+where name='shrirampur';
+
+
+3]
+
+create or replace function lastfinally(lang newspaper80.language%type)returns void
+as
+$$
+declare
+r1 newspaper80.title%type;
+c1 cursor for select title from newspaper80 where language=lang;
+begin
+open c1;
+loop
+fetch c1 into r1;
+exit when not found;
+raise notice'name=%',r1;
+end loop;
+close c1;
+end;
+$$
+language plpgsql;
